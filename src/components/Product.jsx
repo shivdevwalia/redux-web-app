@@ -1,111 +1,4 @@
-// import React, { useEffect } from "react";
-// import { useDispatch, useSelector } from "react-redux";
-// import { addToCart, getProducts, updateCart } from "../redux/actions";
-// import { Button } from "@chakra-ui/react";
-// function Product() {
-//   const dispatch = useDispatch();
-
-//   useEffect(() => {
-//     dispatch(getProducts());
-//   }, [dispatch]);
-
-//   const products = useSelector((state) => state.products);
-//   const loading = useSelector((state) => state.loadingProducts);
-//   const error = useSelector((state) => state.errorProducts);
-//   const loadingAddToCart = useSelector((state) => state.loadingAddToCart);
-//   const cartItems = useSelector((state) => state.cartItems);
-//   const errorAddToCart = useSelector((state) => state.errorAddToCart);
-
-//   const handleAddToCart = (product) => {
-//     const existing = cartItems.find(
-//       (item) => String(item.id) === String(product.id)
-//     );
-//     if (existing) {
-//       dispatch(updateCart(product.id, { quantity: existing.quantity + 1 }));
-//     } else {
-//       dispatch(addToCart(product));
-//     }
-//   };
-
-//   if (loading) {
-//     return (
-//       <div style={{ textAlign: "center", marginTop: 50 }}>
-//         Loading products...
-//       </div>
-//     );
-//   }
-
-//   if (error) {
-//     return (
-//       <div style={{ textAlign: "center", marginTop: 50, color: "red" }}>
-//         Error: {error}
-//       </div>
-//     );
-//   }
-//   return (
-//     <div
-//       style={{
-//         maxWidth: 1000,
-//         margin: "auto",
-//         padding: 20,
-//         display: "grid",
-//         gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
-//         gap: 20,
-//       }}
-//     >
-//       {errorAddToCart && (
-//         <div style={{ color: "red", textAlign: "center", marginBottom: 20 }}>
-//           Error adding to cart: {errorAddToCart}
-//         </div>
-//       )}
-//       {products.map((p) => (
-//         <div
-//           key={p.id}
-//           style={{
-//             border: "1px solid #ddd",
-//             borderRadius: 8,
-//             padding: 16,
-//             display: "flex",
-//             flexDirection: "column",
-//             alignItems: "center",
-//             boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-//             backgroundColor: "#fff",
-//           }}
-//         >
-//           <img
-//             src={p.image}
-//             alt={p.title}
-//             style={{
-//               width: 150,
-//               height: 150,
-//               objectFit: "contain",
-//               marginBottom: 12,
-//             }}
-//           />
-//           <h1 style={{ fontSize: 18, textAlign: "center", marginBottom: 8 }}>
-//             {p.title}
-//           </h1>
-//           <p style={{ fontWeight: "bold", marginBottom: 8 }}>
-//             ${p.price.toFixed(2)}
-//           </p>
-//           <p style={{ fontSize: 14, color: "#555", textAlign: "center" }}>
-//             {p.description}
-//           </p>
-//           <Button
-//             onClick={() => handleAddToCart(p)}
-//             disabled={loadingAddToCart}
-//           >
-//             {" "}
-//             {loadingAddToCart ? "Adding..." : "Add to Cart"}
-//           </Button>
-//         </div>
-//       ))}
-//     </div>
-//   );
-// }
-
-// export default Product;
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart, getProducts, updateCart } from "../redux/actions";
 import {
@@ -119,11 +12,28 @@ import {
   Alert,
   AlertIcon,
   Center,
+  useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from "@chakra-ui/react";
+import { InfoOutlineIcon } from "@chakra-ui/icons";
 
 function Product() {
   const dispatch = useDispatch();
+  // const [msg, setMsg] = useState("");
 
+  // useEffect(() => {
+  //   if (msg) {
+  //     const timer = setTimeout(() => setMsg(""), 2000);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [msg]);
+  const toast = useToast();
   useEffect(() => {
     dispatch(getProducts());
   }, [dispatch]);
@@ -143,9 +53,27 @@ function Product() {
       dispatch(updateCart(product.id, { quantity: existing.quantity + 1 }));
     } else {
       dispatch(addToCart(product));
+
+      toast({
+        title: "Added to cart!",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+        position: "top",
+      });
     }
   };
 
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const handleInfoClick = (product) => {
+    setSelectedProduct(product); // save product to state
+    onOpen(); // open modal
+  };
+  const handleClose = () => {
+    onClose();
+    setSelectedProduct(null);
+  };
   if (loading) {
     return (
       <Center mt={12}>
@@ -179,7 +107,12 @@ function Product() {
           Error adding to cart: {errorAddToCart}
         </Alert>
       )}
-
+      {/* {msg && (
+        <Alert status="success" mb={6} justifyContent="center">
+          <AlertIcon></AlertIcon>
+          {msg}
+        </Alert>
+      )} */}
       <SimpleGrid columns={[1, 2, 3, 4]} spacing={8}>
         {products.map((p) => (
           <Box
@@ -209,21 +142,36 @@ function Product() {
             <Text fontWeight="bold" fontSize="lg" mb={2}>
               ${p.price.toFixed(2)}
             </Text>
-            <Text fontSize="sm" color="gray.600" textAlign="center" mb={4}>
-              {p.description}
-            </Text>
-            <Button
-              colorScheme="teal"
-              onClick={() => handleAddToCart(p)}
-              isLoading={loadingAddToCart}
-              width="full"
-              mt="auto" // this pushes the button to the bottom
-            >
-              Add to Cart
-            </Button>
+            <Box mt="auto" width="100%">
+              <Button
+                leftIcon={<InfoOutlineIcon />}
+                width="full"
+                mb={2}
+                onClick={() => handleInfoClick(p)}
+              >
+                Info
+              </Button>
+
+              <Button
+                colorScheme="teal"
+                onClick={() => handleAddToCart(p)}
+                isLoading={loadingAddToCart}
+                width="full"
+              >
+                Add to Cart
+              </Button>
+            </Box>
           </Box>
         ))}
       </SimpleGrid>
+      <Modal isOpen={isOpen} onClose={handleClose} isCentered>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{selectedProduct?.title}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>{selectedProduct?.description}</ModalBody>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }
