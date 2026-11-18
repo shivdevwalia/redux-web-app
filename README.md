@@ -1,12 +1,20 @@
-# React + Vite
+# Redux Shopping Cart
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React and Redux learning project for asynchronous product and cart operations. The application uses Redux Thunk and a local JSON Server API.
 
-Currently, two official plugins are available:
+[Actions](src/redux/actions.js) call `http://localhost:3001/products` and `/cartItems`; [the reducer](src/redux/reducer.js) maintains separate request, success, and failure state for product and cart operations. [db.json](db.json) supplies the local API data.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Run locally
 
-## Expanding the ESLint configuration
+```sh
+npm ci
+npx json-server db.json --port 3001
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+In a second terminal:
+
+```sh
+npm run dev
+```
+
+The cart writes to the local JSON Server data. This is a state-management exercise with no authentication, payment processing, or automated tests. The checked-in action code uses the local API rather than a direct Fake Store API connection.
